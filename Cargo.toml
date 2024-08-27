@@ -1,7 +1,7 @@
 [package]
 name = "lc3-zkvm"
 description = "C3 ZKVM is a virtual machine implementation based on the Little Computer 3 (LC3) architecture, enhanced with zero-knowledge proof capabilities."
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["keroroxx520@gmail.com"]
 license = "MIT"
