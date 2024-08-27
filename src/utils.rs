@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{self, Read};
 use crate::memory::Memory;
 use crate::register::{RegisterFile, Register};
-use crate::instruction::Instruction;
+use crate::instruction::execute;
 use crate::opcode::extract_opcode;
 
 /// Load an LC3 object file into memory
@@ -11,25 +11,31 @@ pub fn load_obj_file(filename: &str, memory: &mut Memory) -> io::Result<u16> {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
 
-    let origin: u16 = 0x3000;
+    let mut origin: u16 = 0x3000;
     let mut i = 0;
 
-    // FIXME: origin is not used
-    // // Read the origin
-    // if buffer.len() >= 2 {
-    //     origin = u16::from_be_bytes([buffer[0], buffer[1]]);
-    //     i = 2;
-    // }
+    // Read the origin
+    if buffer.len() >= 2 {
+        origin = u16::from_be_bytes([buffer[0], buffer[1]]);
+        origin = origin.swap_bytes();
+        i = 2;
+    }
 
     // Load program into memory
     let mut address = origin;
     while i < buffer.len() {
         if i + 1 < buffer.len() {
             let instruction = u16::from_be_bytes([buffer[i], buffer[i + 1]]);
+
+            // Notice that swap16 is called on each loaded value. LC-3 programs are big-endian,
+            // but most modern computers are little-endian. So, we need to swap each uint16 that
+            // is loaded.
+            let instruction = instruction.swap_bytes();
+
             memory.write(address, instruction);
 
             let opcode = extract_opcode(instruction);
-            println!("loading image, address: 0x{:04X}, opcode: {:?}", address, opcode.unwrap());
+            println!("loading image, address: 0x{:04X}, opcode: {:?}, instruction: {:04X}", address, opcode.unwrap(), instruction   );
 
             address += 1;
             i += 2;
@@ -52,11 +58,9 @@ pub fn execute_program(memory: &mut Memory, registers: &mut RegisterFile) -> Res
         registers.write(Register::PC, pc.wrapping_add(1));
 
         if let Some(opcode) = extract_opcode(raw_instruction) {
-            let instruction = Instruction::new(opcode);
-
             println!("execute_program, address: 0x{:04X}, opcode: {:?}", pc, opcode);
 
-            match instruction.execute(raw_instruction, registers, memory) {
+            match execute(raw_instruction, registers, memory) {
                 Ok(_) => {},
                 Err("HALT") => return Ok(()),
                 Err(e) => return Err(e),
