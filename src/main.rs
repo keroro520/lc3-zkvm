@@ -1,11 +1,11 @@
-use std::env;
 use lc3_zkvm::memory::Memory;
-use lc3_zkvm::register::{RegisterFile, Register};
-use lc3_zkvm::utils::{load_obj_file, execute_program};
+use lc3_zkvm::register::{Register, RegisterFile};
+use lc3_zkvm::utils::{execute_program, load_obj_file};
+use std::env;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() < 2 {
         return Err("Usage: program <path_to_obj_file>".into());
     }

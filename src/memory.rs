@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn test_memory_operations() {
         let mut mem = Memory::new();
-        
+
         // Test write and read
         mem.write(0x3000, 0x1234);
         assert_eq!(mem.read(0x3000), 0x1234);

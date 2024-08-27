@@ -1,9 +1,9 @@
+use crate::instruction::execute;
+use crate::memory::Memory;
+use crate::opcode::extract_opcode;
+use crate::register::{Register, RegisterFile};
 use std::fs::File;
 use std::io::{self, Read};
-use crate::memory::Memory;
-use crate::register::{RegisterFile, Register};
-use crate::instruction::execute;
-use crate::opcode::extract_opcode;
 
 /// Load an LC3 object file into memory
 pub fn load_obj_file(filename: &str, memory: &mut Memory) -> io::Result<u16> {
@@ -43,7 +43,10 @@ pub fn load_obj_file(filename: &str, memory: &mut Memory) -> io::Result<u16> {
 }
 
 /// Execute the loaded program
-pub fn execute_program(memory: &mut Memory, registers: &mut RegisterFile) -> Result<(), &'static str> {
+pub fn execute_program(
+    memory: &mut Memory,
+    registers: &mut RegisterFile,
+) -> Result<(), &'static str> {
     // println!("execute_program, PC: 0x{:04X}", registers.read(Register::PC));
     loop {
         let pc = registers.read(Register::PC);
@@ -56,7 +59,7 @@ pub fn execute_program(memory: &mut Memory, registers: &mut RegisterFile) -> Res
             // println!("execute_program, address: 0x{:04X}, opcode: {:?}", pc, opcode);
 
             match execute(raw_instruction, registers, memory) {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err("HALT") => return Ok(()),
                 Err(e) => return Err(e),
             }

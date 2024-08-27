@@ -60,8 +60,14 @@ impl RegisterFile {
     /// Read the value of a register
     pub fn read(&self, register: Register) -> u16 {
         match register {
-            Register::R0 | Register::R1 | Register::R2 | Register::R3 |
-            Register::R4 | Register::R5 | Register::R6 | Register::R7 => self.registers[register as usize],
+            Register::R0
+            | Register::R1
+            | Register::R2
+            | Register::R3
+            | Register::R4
+            | Register::R5
+            | Register::R6
+            | Register::R7 => self.registers[register as usize],
             Register::PC => self.pc,
             Register::COND => self.cond,
         }
@@ -70,8 +76,14 @@ impl RegisterFile {
     /// Write a value to a register
     pub fn write(&mut self, register: Register, value: u16) {
         match register {
-            Register::R0 | Register::R1 | Register::R2 | Register::R3 |
-            Register::R4 | Register::R5 | Register::R6 | Register::R7 => self.registers[register as usize] = value,
+            Register::R0
+            | Register::R1
+            | Register::R2
+            | Register::R3
+            | Register::R4
+            | Register::R5
+            | Register::R6
+            | Register::R7 => self.registers[register as usize] = value,
             Register::PC => self.pc = value,
             Register::COND => self.cond = value,
         }

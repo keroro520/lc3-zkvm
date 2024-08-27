@@ -143,7 +143,13 @@ mod tests {
     #[test]
     fn test_extract_opcode() {
         assert_eq!(extract_opcode(0b0001_000_000_000_000), Some(Opcode::OP_ADD));
-        assert_eq!(extract_opcode(0b1111_000_000_000_000), Some(Opcode::OP_TRAP));
-        assert_eq!(extract_opcode(0b1111_111_111_111_111), Some(Opcode::OP_TRAP));
+        assert_eq!(
+            extract_opcode(0b1111_000_000_000_000),
+            Some(Opcode::OP_TRAP)
+        );
+        assert_eq!(
+            extract_opcode(0b1111_111_111_111_111),
+            Some(Opcode::OP_TRAP)
+        );
     }
 }

@@ -1,8 +1,7 @@
-use crate::opcode::{extract_opcode, Opcode};
-use crate::register::{RegisterFile, Register};
-use crate::memory::Memory;
 use crate::instruction::execute;
-
+use crate::memory::Memory;
+use crate::opcode::{extract_opcode, Opcode};
+use crate::register::{Register, RegisterFile};
 
 #[test]
 fn test_add_instruction() {
