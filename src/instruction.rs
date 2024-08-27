@@ -253,7 +253,6 @@ use std::io::{self, Read, Write};
     /// Perform a system call specified by the trap vector.
     /// The trap vector is specified in bits [7:0] of the instruction.
     fn execute_trap(raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
-        println!("trap");
         let trapvect8 = raw & 0xFF;
         match trapvect8 {
             0x20 => trap_getc(registers),
@@ -334,7 +333,6 @@ use std::io::{self, Read, Write};
     }
 
     fn trap_halt() -> Result<(), &'static str> {
-        println!("HALT");
         Err("HALT")
     }
 
