@@ -1,6 +1,7 @@
 use crate::opcode::Opcode;
 use crate::register::{Register, RegisterFile, condition_flags};
 use crate::memory::Memory;
+use std::io::{self, Read, Write};
 
 pub struct Instruction {
     pub opcode: Opcode,
@@ -259,42 +260,90 @@ impl Instruction {
     /// 
     /// Perform a system call specified by the trap vector.
     /// The trap vector is specified in bits [7:0] of the instruction.
-    fn execute_trap(&self, raw: u16, _registers: &mut RegisterFile, _memory: &mut Memory) -> Result<(), &'static str> {
-        // TRAP implementation depends on your specific ZKVM requirements
-        // This is a placeholder implementation
+    fn execute_trap(&self, raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
+        println!("trap");
         let trapvect8 = raw & 0xFF;
         match trapvect8 {
-            0x20 => {
-                // GETC: Read a single character from the keyboard
-                // Not implemented in this example
-                Err("GETC not implemented")
-            }
-            0x21 => {
-                // OUT: Write a character to the console
-                // Not implemented in this example
-                Err("OUT not implemented")
-            }
-            0x22 => {
-                // PUTS: Write a string to the console
-                // Not implemented in this example
-                Err("PUTS not implemented")
-            }
-            0x23 => {
-                // IN: Print a prompt on the screen and read a character from the keyboard
-                // Not implemented in this example
-                Err("IN not implemented")
-            }
-            0x24 => {
-                // PUTSP: Write a string of characters to the console
-                // Not implemented in this example
-                Err("PUTSP not implemented")
-            }
-            0x25 => {
-                // HALT: Halt execution and print a message on the console
-                Err("HALT")
-            }
+            0x20 => self.trap_getc(registers),
+            0x21 => self.trap_out(registers),
+            0x22 => self.trap_puts(registers, memory),
+            0x23 => self.trap_in(registers),
+            0x24 => self.trap_putsp(registers, memory),
+            0x25 => self.trap_halt(),
             _ => Err("Unknown TRAP vector"),
         }
+    }
+
+    fn trap_getc(&self, registers: &mut RegisterFile) -> Result<(), &'static str> {
+        let mut buffer = [0; 1];
+        if io::stdin().read_exact(&mut buffer).is_ok() {
+            registers.write(Register::R0, buffer[0] as u16);
+            Ok(())
+        } else {
+            Err("Failed to read character")
+        }
+    }
+
+    fn trap_out(&self, registers: &mut RegisterFile) -> Result<(), &'static str> {
+        let char = (registers.read(Register::R0) & 0xFF) as u8 as char;
+        print!("{}", char);
+        io::stdout().flush().map_err(|_| "Failed to flush stdout")?;
+        Ok(())
+    }
+
+    fn trap_puts(&self, registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
+        let mut address = registers.read(Register::R0);
+        loop {
+            let char = (memory.read(address) & 0xFF) as u8 as char;
+            if char == '\0' {
+                break;
+            }
+            print!("{}", char);
+            address += 1;
+        }
+        io::stdout().flush().map_err(|_| "Failed to flush stdout")?;
+        Ok(())
+    }
+
+    fn trap_in(&self, registers: &mut RegisterFile) -> Result<(), &'static str> {
+        print!("Enter a character: ");
+        io::stdout().flush().map_err(|_| "Failed to flush stdout")?;
+        let mut buffer = [0; 1];
+        if io::stdin().read_exact(&mut buffer).is_ok() {
+            let char = buffer[0] as char;
+            println!("{}", char);
+            registers.write(Register::R0, buffer[0] as u16);
+            Ok(())
+        } else {
+            Err("Failed to read character")
+        }
+    }
+
+    fn trap_putsp(&self, registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
+        let mut address = registers.read(Register::R0);
+        loop {
+            let word = memory.read(address);
+            let char1 = (word & 0xFF) as u8 as char;
+            if char1 == '\0' {
+                break;
+            }
+            print!("{}", char1);
+            
+            let char2 = ((word >> 8) & 0xFF) as u8 as char;
+            if char2 != '\0' {
+                print!("{}", char2);
+            } else {
+                break;
+            }
+            address += 1;
+        }
+        io::stdout().flush().map_err(|_| "Failed to flush stdout")?;
+        Ok(())
+    }
+
+    fn trap_halt(&self) -> Result<(), &'static str> {
+        println!("HALT");
+        Err("HALT")
     }
 }
 
