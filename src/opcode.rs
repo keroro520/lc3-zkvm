@@ -10,85 +10,85 @@ pub enum Opcode {
     /// Branch
     /// Conditional branch based on condition codes (N, Z, P)
     /// Format: 0000 NZP PCoffset9
-    OP_BR,
+    OP_BR = 0x0,
 
     /// Add
     /// Add two values and store the result
     /// Format: 0001 DR SR1 000 SR2 (register mode)
     ///         0001 DR SR1 1 imm5 (immediate mode)
-    OP_ADD,
+    OP_ADD = 0x1,
 
     /// Load
     /// Load a value from memory into a register
     /// Format: 0010 DR PCoffset9
-    OP_LD,
+    OP_LD = 0x2,
 
     /// Store
     /// Store a value from a register into memory
     /// Format: 0011 SR PCoffset9
-    OP_ST,
+    OP_ST = 0x3,
 
     /// Jump to Subroutine
     /// Jump to a subroutine and save the return address
     /// Format: 0100 1 PCoffset11 (JSR)
     ///         0100 000 BaseR 000000 (JSRR)
-    OP_JSR,
+    OP_JSR = 0x4,
 
     /// Bitwise AND
     /// Perform bitwise AND operation
     /// Format: 0101 DR SR1 000 SR2 (register mode)
     ///         0101 DR SR1 1 imm5 (immediate mode)
-    OP_AND,
+    OP_AND = 0x5,
 
     /// Load Register
     /// Load a value from memory using a base register and offset
     /// Format: 0110 DR BaseR offset6
-    OP_LDR,
+    OP_LDR = 0x6,
 
     /// Store Register
     /// Store a value to memory using a base register and offset
     /// Format: 0111 SR BaseR offset6
-    OP_STR,
+    OP_STR = 0x7,
 
     /// Return from Interrupt
     /// Unused in LC3
     /// Format: 1000 000000000000
-    OP_RTI,
+    OP_RTI = 0x8,
 
     /// Bitwise NOT
     /// Perform bitwise NOT operation
     /// Format: 1001 DR SR 111111
-    OP_NOT,
+    OP_NOT = 0x9,
 
     /// Load Indirect
     /// Load a value from memory using an address stored in memory
     /// Format: 1010 DR PCoffset9
-    OP_LDI,
+    OP_LDI = 0xA,
 
     /// Store Indirect
     /// Store a value to memory using an address stored in memory
     /// Format: 1011 SR PCoffset9
-    OP_STI,
+    OP_STI = 0xB,
 
     /// Jump
     /// Jump to an address specified by a register
     /// Format: 1100 000 BaseR 000000
-    OP_JMP,
+    OP_JMP = 0xC,
 
     /// Reserved
     /// Unused opcode
     /// Format: 1101 000000000000
-    OP_RES,
+    OP_RES = 0xD,
 
     /// Load Effective Address
     /// Load a memory address into a register
     /// Format: 1110 DR PCoffset9
-    OP_LEA,
+    OP_LEA = 0xE,
 
     /// Execute Trap
     /// Execute a system call
     /// Format: 1111 0000 trapvect8
-    OP_TRAP,
+    OP_TRAP = 0xF,
 }
 
 impl Opcode {
