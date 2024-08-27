@@ -11,14 +11,15 @@ pub fn load_obj_file(filename: &str, memory: &mut Memory) -> io::Result<u16> {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
 
-    let mut origin: u16 = 0;
+    let origin: u16 = 0x3000;
     let mut i = 0;
 
-    // Read the origin
-    if buffer.len() >= 2 {
-        origin = u16::from_be_bytes([buffer[0], buffer[1]]);
-        i = 2;
-    }
+    // FIXME: origin is not used
+    // // Read the origin
+    // if buffer.len() >= 2 {
+    //     origin = u16::from_be_bytes([buffer[0], buffer[1]]);
+    //     i = 2;
+    // }
 
     // Load program into memory
     let mut address = origin;
@@ -26,6 +27,10 @@ pub fn load_obj_file(filename: &str, memory: &mut Memory) -> io::Result<u16> {
         if i + 1 < buffer.len() {
             let instruction = u16::from_be_bytes([buffer[i], buffer[i + 1]]);
             memory.write(address, instruction);
+
+            let opcode = extract_opcode(instruction);
+            println!("loading image, address: 0x{:04X}, opcode: {:?}", address, opcode.unwrap());
+
             address += 1;
             i += 2;
         } else {
@@ -38,6 +43,7 @@ pub fn load_obj_file(filename: &str, memory: &mut Memory) -> io::Result<u16> {
 
 /// Execute the loaded program
 pub fn execute_program(memory: &mut Memory, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    println!("execute_program, PC: 0x{:04X}", registers.read(Register::PC));
     loop {
         let pc = registers.read(Register::PC);
         let raw_instruction = memory.read(pc);
@@ -47,6 +53,9 @@ pub fn execute_program(memory: &mut Memory, registers: &mut RegisterFile) -> Res
 
         if let Some(opcode) = extract_opcode(raw_instruction) {
             let instruction = Instruction::new(opcode);
+
+            println!("execute_program, address: 0x{:04X}, opcode: {:?}", pc, opcode);
+
             match instruction.execute(raw_instruction, registers, memory) {
                 Ok(_) => {},
                 Err("HALT") => return Ok(()),
