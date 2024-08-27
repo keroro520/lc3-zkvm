@@ -12,17 +12,14 @@
 //! ## Usage
 //! Create a new memory instance:
 //! ```
+//! use lc3_zkvm::memory::Memory;
 //! let mut memory = Memory::new();
-//! ```
 //!
-//! Read from and write to memory:
-//! ```
+//! // Read from and write to memory:
 //! memory.write(0x3000, 0x1234);
 //! let value = memory.read(0x3000);
-//! ```
 //!
-//! Use array-like indexing:
-//! ```
+//! // Use array-like indexing:
 //! memory[0x3000] = 0x5678;
 //! let value = memory[0x3000];
 //! ```
