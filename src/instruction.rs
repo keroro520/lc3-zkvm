@@ -1,3 +1,69 @@
+//! Module `instruction`
+//!
+//! This module contains functions to execute various instructions. These instructions include arithmetic operations, logical operations, branching, jumping, loading, storing, and system calls.
+//!
+//! # Usage
+//!
+//! The module provides an `execute` function that executes the corresponding operation based on the given raw instruction, register file, and memory state.
+//!
+//! ```rust
+//! use lc3_zkvm::memory::Memory;
+//! use lc3_zkvm::register::RegisterFile;
+//! use lc3_zkvm::instruction::execute;
+//!
+//! let raw_instruction: u16 = 0x1234;
+//! let mut registers = RegisterFile::new();
+//! let mut memory = Memory::new();
+//!
+//! match execute(raw_instruction, &mut registers, &mut memory) {
+//!     Ok(_) => println!("Instruction executed successfully"),
+//!     Err(e) => println!("Instruction execution failed: {}", e),
+//! }
+//! ```
+//!
+//! # Instruction List
+//!
+//! - `OP_ADD`: Addition operation
+//! - `OP_AND`: Bitwise AND operation
+//! - `OP_NOT`: Bitwise NOT operation
+//! - `OP_BR`: Conditional branch
+//! - `OP_JMP`: Unconditional jump
+//! - `OP_JSR`: Jump to subroutine
+//! - `OP_LD`: Load data
+//! - `OP_LDI`: Indirect load data
+//! - `OP_LDR`: Load data from register
+//! - `OP_LEA`: Load effective address
+//! - `OP_ST`: Store data
+//! - `OP_STI`: Indirect store data
+//! - `OP_STR`: Store data from register
+//! - `OP_TRAP`: System call
+//!
+//! # Error Handling
+//!
+//! If the instruction is unrecognized or not implemented, the `execute` function will return the corresponding error message.
+//!
+//! # Helper Functions
+//!
+//! - `sign_extend`: Sign-extend a value
+//! - `Register::from`: Convert `u16` to `Register` enum
+//!
+//! # Example
+//!
+//! ```rust
+//! use lc3_zkvm::memory::Memory;
+//! use lc3_zkvm::register::RegisterFile;
+//! use lc3_zkvm::instruction::execute;
+//!
+//! let raw_instruction: u16 = 0x1234;
+//! let mut registers = RegisterFile::new();
+//! let mut memory = Memory::new();
+//!
+//! match execute(raw_instruction, &mut registers, &mut memory) {
+//!     Ok(_) => println!("Instruction executed successfully"),
+//!     Err(e) => println!("Instruction execution failed: {}", e),
+//! }
+//! ```
+
 use crate::memory::Memory;
 use crate::opcode::{extract_opcode, Opcode};
 use crate::register::{condition_flags, Register, RegisterFile};
