@@ -1,33 +1,25 @@
-use crate::opcode::Opcode;
+use crate::opcode::{extract_opcode, Opcode};
 use crate::register::{Register, RegisterFile, condition_flags};
 use crate::memory::Memory;
 use std::io::{self, Read, Write};
 
-pub struct Instruction {
-    pub opcode: Opcode,
-}
-
-impl Instruction {
-    pub fn new(opcode: Opcode) -> Self {
-        Instruction { opcode }
-    }
-
-    pub fn execute(&self, raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
-        match self.opcode {
-            Opcode::OP_ADD => self.execute_add(raw, registers),
-            Opcode::OP_AND => self.execute_and(raw, registers),
-            Opcode::OP_NOT => self.execute_not(raw, registers),
-            Opcode::OP_BR => self.execute_br(raw, registers),
-            Opcode::OP_JMP => self.execute_jmp(raw, registers),
-            Opcode::OP_JSR => self.execute_jsr(raw, registers),
-            Opcode::OP_LD => self.execute_ld(raw, registers, memory),
-            Opcode::OP_LDI => self.execute_ldi(raw, registers, memory),
-            Opcode::OP_LDR => self.execute_ldr(raw, registers, memory),
-            Opcode::OP_LEA => self.execute_lea(raw, registers),
-            Opcode::OP_ST => self.execute_st(raw, registers, memory),
-            Opcode::OP_STI => self.execute_sti(raw, registers, memory),
-            Opcode::OP_STR => self.execute_str(raw, registers, memory),
-            Opcode::OP_TRAP => self.execute_trap(raw, registers, memory),
+    pub fn execute(raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
+        let opcode = extract_opcode(raw).ok_or("Unknown opcode")?;
+        match opcode {
+            Opcode::OP_ADD => execute_add(raw, registers),
+            Opcode::OP_AND => execute_and(raw, registers),
+            Opcode::OP_NOT => execute_not(raw, registers),
+            Opcode::OP_BR => execute_br(raw, registers),
+            Opcode::OP_JMP => execute_jmp(raw, registers),
+            Opcode::OP_JSR => execute_jsr(raw, registers),
+            Opcode::OP_LD => execute_ld(raw, registers, memory),
+            Opcode::OP_LDI => execute_ldi(raw, registers, memory),
+            Opcode::OP_LDR => execute_ldr(raw, registers, memory),
+            Opcode::OP_LEA => execute_lea(raw, registers),
+            Opcode::OP_ST => execute_st(raw, registers, memory),
+            Opcode::OP_STI => execute_sti(raw, registers, memory),
+            Opcode::OP_STR => execute_str(raw, registers, memory),
+            Opcode::OP_TRAP => execute_trap(raw, registers, memory),
             Opcode::OP_RES => Err("Reserved opcode"),
             Opcode::OP_RTI => Err("RTI not implemented"),
         }
@@ -38,7 +30,7 @@ impl Instruction {
     /// Add two values and store the result in a register.
     /// If bit [5] is 0, the second source operand is obtained from SR2.
     /// If bit [5] is 1, the second source operand is obtained by sign-extending the imm5 field to 16 bits.
-    fn execute_add(&self, raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    fn execute_add(raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
         let dr = (raw >> 9) & 0x7;
         let sr1 = (raw >> 6) & 0x7;
         let mode = (raw >> 5) & 0x1;
@@ -63,7 +55,7 @@ impl Instruction {
     /// Perform bitwise AND on two values and store the result in a register.
     /// If bit [5] is 0, the second source operand is obtained from SR2.
     /// If bit [5] is 1, the second source operand is obtained by sign-extending the imm5 field to 16 bits.
-    fn execute_and(&self, raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    fn execute_and(raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
         let dr = (raw >> 9) & 0x7;
         let sr1 = (raw >> 6) & 0x7;
         let mode = (raw >> 5) & 0x1;
@@ -86,7 +78,7 @@ impl Instruction {
     /// NOT - Bitwise NOT
     /// 
     /// Perform bitwise NOT on a value and store the result in a register.
-    fn execute_not(&self, raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    fn execute_not(raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
         let dr = (raw >> 9) & 0x7;
         let sr = (raw >> 6) & 0x7;
 
@@ -102,7 +94,7 @@ impl Instruction {
     /// 
     /// Conditional branch based on condition codes (N, Z, P).
     /// If (n AND N) OR (z AND Z) OR (p AND P) is true, the program branches to the address specified by adding the sign-extended PCoffset9 field to the incremented PC.
-    fn execute_br(&self, raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    fn execute_br(raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
         let pc = registers.read(Register::PC);
         let cond = registers.read(Register::COND);
         let n = (raw >> 11) & 0x1;
@@ -123,7 +115,7 @@ impl Instruction {
     /// 
     /// Unconditional jump to the address specified by the contents of the base register.
     /// Also used for RET (return from subroutine) when BaseR is R7.
-    fn execute_jmp(&self, raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    fn execute_jmp(raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
         let base_r = (raw >> 6) & 0x7;
         let base = registers.read(Register::from(base_r));
         registers.write(Register::PC, base);
@@ -135,7 +127,7 @@ impl Instruction {
     /// Jump to a subroutine, saving the return address in R7.
     /// If bit [11] is 0, the PC is loaded with the contents of the base register (JSRR).
     /// If bit [11] is 1, the PC is loaded with the address specified by adding the sign-extended PCoffset11 field to the incremented PC (JSR).
-    fn execute_jsr(&self, raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    fn execute_jsr(raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
         let pc = registers.read(Register::PC);
         registers.write(Register::R7, pc);
 
@@ -155,7 +147,7 @@ impl Instruction {
     /// 
     /// Load a value from memory into a register.
     /// The address is calculated by sign-extending bits [8:0] to 16 bits and adding this value to the incremented PC.
-    fn execute_ld(&self, raw: u16, registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
+    fn execute_ld(raw: u16, registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
         let dr = (raw >> 9) & 0x7;
         let pc = registers.read(Register::PC);
         let pc_offset = sign_extend(raw & 0x1FF, 9);
@@ -170,7 +162,7 @@ impl Instruction {
     /// 
     /// Load a value from memory into a register using an indirect address.
     /// The address of the address is calculated by sign-extending bits [8:0] to 16 bits and adding this value to the incremented PC.
-    fn execute_ldi(&self, raw: u16, registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
+    fn execute_ldi(raw: u16, registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
         let dr = (raw >> 9) & 0x7;
         let pc = registers.read(Register::PC);
         let pc_offset = sign_extend(raw & 0x1FF, 9);
@@ -186,7 +178,7 @@ impl Instruction {
     /// 
     /// Load a value from memory into a register.
     /// The address is calculated by sign-extending bits [5:0] to 16 bits and adding this value to the contents of the base register.
-    fn execute_ldr(&self, raw: u16, registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
+    fn execute_ldr(raw: u16, registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
         let dr = (raw >> 9) & 0x7;
         let base_r = (raw >> 6) & 0x7;
         let offset = sign_extend(raw & 0x3F, 6);
@@ -202,7 +194,7 @@ impl Instruction {
     /// 
     /// Load a register with an effective address.
     /// The address is calculated by sign-extending bits [8:0] to 16 bits and adding this value to the incremented PC.
-    fn execute_lea(&self, raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    fn execute_lea(raw: u16, registers: &mut RegisterFile) -> Result<(), &'static str> {
         let dr = (raw >> 9) & 0x7;
         let pc = registers.read(Register::PC);
         let pc_offset = sign_extend(raw & 0x1FF, 9);
@@ -216,7 +208,7 @@ impl Instruction {
     /// 
     /// Store a value from a register into memory.
     /// The address is calculated by sign-extending bits [8:0] to 16 bits and adding this value to the incremented PC.
-    fn execute_st(&self, raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
+    fn execute_st(raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
         let sr = (raw >> 9) & 0x7;
         let pc = registers.read(Register::PC);
         let pc_offset = sign_extend(raw & 0x1FF, 9);
@@ -230,7 +222,7 @@ impl Instruction {
     /// 
     /// Store a value from a register into memory using an indirect address.
     /// The address of the address is calculated by sign-extending bits [8:0] to 16 bits and adding this value to the incremented PC.
-    fn execute_sti(&self, raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
+    fn execute_sti(raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
         let sr = (raw >> 9) & 0x7;
         let pc = registers.read(Register::PC);
         let pc_offset = sign_extend(raw & 0x1FF, 9);
@@ -245,7 +237,7 @@ impl Instruction {
     /// 
     /// Store a value from a register into memory.
     /// The address is calculated by sign-extending bits [5:0] to 16 bits and adding this value to the contents of the base register.
-    fn execute_str(&self, raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
+    fn execute_str(raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
         let sr = (raw >> 9) & 0x7;
         let base_r = (raw >> 6) & 0x7;
         let offset = sign_extend(raw & 0x3F, 6);
@@ -260,21 +252,21 @@ impl Instruction {
     /// 
     /// Perform a system call specified by the trap vector.
     /// The trap vector is specified in bits [7:0] of the instruction.
-    fn execute_trap(&self, raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
+    fn execute_trap(raw: u16, registers: &mut RegisterFile, memory: &mut Memory) -> Result<(), &'static str> {
         println!("trap");
         let trapvect8 = raw & 0xFF;
         match trapvect8 {
-            0x20 => self.trap_getc(registers),
-            0x21 => self.trap_out(registers),
-            0x22 => self.trap_puts(registers, memory),
-            0x23 => self.trap_in(registers),
-            0x24 => self.trap_putsp(registers, memory),
-            0x25 => self.trap_halt(),
+            0x20 => trap_getc(registers),
+            0x21 => trap_out(registers),
+            0x22 => trap_puts(registers, memory),
+            0x23 => trap_in(registers),
+            0x24 => trap_putsp(registers, memory),
+            0x25 => trap_halt(),
             _ => Err("Unknown TRAP vector"),
         }
     }
 
-    fn trap_getc(&self, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    fn trap_getc(registers: &mut RegisterFile) -> Result<(), &'static str> {
         let mut buffer = [0; 1];
         if io::stdin().read_exact(&mut buffer).is_ok() {
             registers.write(Register::R0, buffer[0] as u16);
@@ -284,14 +276,14 @@ impl Instruction {
         }
     }
 
-    fn trap_out(&self, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    fn trap_out(registers: &mut RegisterFile) -> Result<(), &'static str> {
         let char = (registers.read(Register::R0) & 0xFF) as u8 as char;
         print!("{}", char);
         io::stdout().flush().map_err(|_| "Failed to flush stdout")?;
         Ok(())
     }
 
-    fn trap_puts(&self, registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
+    fn trap_puts(registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
         let mut address = registers.read(Register::R0);
         loop {
             let char = (memory.read(address) & 0xFF) as u8 as char;
@@ -305,7 +297,7 @@ impl Instruction {
         Ok(())
     }
 
-    fn trap_in(&self, registers: &mut RegisterFile) -> Result<(), &'static str> {
+    fn trap_in(registers: &mut RegisterFile) -> Result<(), &'static str> {
         print!("Enter a character: ");
         io::stdout().flush().map_err(|_| "Failed to flush stdout")?;
         let mut buffer = [0; 1];
@@ -319,7 +311,7 @@ impl Instruction {
         }
     }
 
-    fn trap_putsp(&self, registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
+    fn trap_putsp(registers: &mut RegisterFile, memory: &Memory) -> Result<(), &'static str> {
         let mut address = registers.read(Register::R0);
         loop {
             let word = memory.read(address);
@@ -341,11 +333,10 @@ impl Instruction {
         Ok(())
     }
 
-    fn trap_halt(&self) -> Result<(), &'static str> {
+    fn trap_halt() -> Result<(), &'static str> {
         println!("HALT");
         Err("HALT")
     }
-}
 
 // Helper function: Sign extend a value with a given bit count
 fn sign_extend(mut x: u16, bit_count: u16) -> u16 {
