@@ -7,6 +7,7 @@ LC3 ZKVM is a virtual machine implementation based on the Little Computer 3 (LC3
 
 ## Build
 
+
 ```sh
 cargo build --release
 ```
