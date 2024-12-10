@@ -4,6 +4,7 @@
 
 LC3 ZKVM is a virtual machine implementation based on the Little Computer 3 (LC3) architecture, enhanced with zero-knowledge proof capabilities. This project aims to provide a secure and efficient environment for executing LC3 programs with privacy-preserving features.
 
+
 ## Build
 
 ```sh
