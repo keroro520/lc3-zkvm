@@ -1,4 +1,4 @@
-# LC3 ZKVM, LC3 Zero-Knowledge Virtual Machine
+# LC3 ZKVM, aka LC3-based Zero-Knowledge Virtual Machine
 
 ## Introduction
 
