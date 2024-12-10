@@ -23,6 +23,7 @@ cargo run --release --bin lc3-zkvm -- ./assets/hello.obj
 ```
 
 ## License
+
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
 ## Reference
